@@ -2,421 +2,408 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>System 7.0</title>
+<title>/six — System 8.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --bg: #030304;
-  --surface: rgba(20, 20, 25, 0.4);
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #00f3ff; /* Cyber Cyan */
-  --accent-glow: rgba(0, 243, 255, 0.4);
-  --primary: #7000ff; /* Deep Purple */
-  --text: #ffffff;
-  --text-muted: #7a7a85;
+  --bg: #020203;
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.15);
   
-  /* Physics Constants */
-  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
-  --ease-in-back: cubic-bezier(0.6, -0.28, 0.735, 0.045);
+  --primary: #f2f2f2;
+  --accent: #ff003c; /* Cyber Red */
+  --accent-secondary: #00f0ff; /* Neon Cyan */
+  
+  --ease-elastic: cubic-bezier(0.16, 1, 0.3, 1); /* The "Perfect" Snap */
+  --ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; cursor: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; cursor: none; user-select: none; }
 
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg);
-  color: var(--text);
-  overflow: hidden; /* App-like feel */
+  color: var(--primary);
+  overflow: hidden;
   height: 100vh; width: 100vw;
+  perspective: 2000px;
 }
 
 /* --- AMBIENCE --- */
-.scanline {
-  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 51%);
-  background-size: 100% 4px;
-  opacity: 0.6;
-}
-.vignette {
-  position: fixed; inset: 0; pointer-events: none; z-index: 1;
-  background: radial-gradient(circle at center, transparent 0%, #000 120%);
-}
-.bg-grid {
-  position: fixed; inset: 0; z-index: 0;
+.world-grid {
+  position: fixed; inset: -50%; width: 200%; height: 200%;
   background-image: 
     linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  transform: perspective(1000px) rotateX(10deg) scale(1.5);
-  transform-origin: top center;
-  opacity: 0.5;
+  background-size: 80px 80px;
+  transform: rotateX(60deg) translateY(-100px) translateZ(-200px);
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+  animation: grid-scroll 20s linear infinite;
+  z-index: -1;
+}
+@keyframes grid-scroll { from { transform: rotateX(60deg) translateY(0) translateZ(-200px); } to { transform: rotateX(60deg) translateY(80px) translateZ(-200px); } }
+
+.particles {
+  position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(255,0,60,0.05), transparent 60%);
+  pointer-events: none; z-index: 0;
 }
 
 /* --- CURSOR --- */
 #cursor {
   position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none;
-  mix-blend-mode: difference;
+  mix-blend-mode: exclusion;
 }
-.c-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); }
-.c-ring { 
-  width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.5); 
-  border-radius: 50%; position: absolute; transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s, border-color 0.2s;
+.c-dot { width: 4px; height: 4px; background: white; border-radius: 50%; position: absolute; transform: translate(-50%,-50%); }
+.c-circle {
+  width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.4); border-radius: 50%;
+  position: absolute; transform: translate(-50%,-50%);
+  transition: width 0.3s var(--ease-elastic), height 0.3s var(--ease-elastic), border-color 0.2s;
 }
-body:hover .c-ring.active { width: 60px; height: 60px; border-color: var(--accent); background: rgba(255,255,255,0.05); }
+body.hovering .c-circle { width: 60px; height: 60px; border-color: var(--accent-secondary); background: rgba(255,255,255,0.05); }
 
-/* --- LAYOUT --- */
-#app-root {
-  height: 100%; overflow-y: auto; padding: 100px 5vw;
-  transition: transform 0.6s var(--ease-out-expo), filter 0.6s;
+/* --- MAIN LAYOUT --- */
+#app {
+  padding: 100px 8vw;
+  transition: transform 0.8s var(--ease-elastic), filter 0.8s;
+  transform-style: preserve-3d;
 }
-body.modal-open #app-root {
-  transform: scale(0.92) translateY(-30px);
-  filter: blur(8px) brightness(0.6);
+body.has-modal #app {
+  transform: scale(0.9) translateZ(-50px) rotateX(2deg);
+  filter: blur(10px) brightness(0.5);
   pointer-events: none;
 }
 
-.hero { margin-bottom: 80px; position: relative; z-index: 2; }
 .hero h1 {
-  font-size: clamp(3rem, 7vw, 6rem); font-weight: 900;
-  text-transform: uppercase; line-height: 0.9; letter-spacing: -2px;
-  background: linear-gradient(180deg, #fff, #666);
-  -webkit-background-clip: text; color: transparent;
+  font-size: 8vw; font-weight: 800; line-height: 0.8; letter-spacing: -0.04em;
+  background: linear-gradient(180deg, #fff, #555); -webkit-background-clip: text; color: transparent;
+  margin-bottom: 20px;
 }
-.hero p { font-family: 'JetBrains Mono'; color: var(--accent); margin-top: 20px; letter-spacing: 1px; }
 
 /* --- CARDS --- */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 80px; }
 
 .card {
-  height: 340px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(10px);
+  height: 360px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
   padding: 30px;
-  border-radius: 20px;
   position: relative;
-  transition: 0.3s;
+  transition: transform 0.4s var(--ease-elastic), border-color 0.3s;
   overflow: hidden;
-}
-.card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255,255,255,0.2);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-}
-/* Holographic corner accents */
-.card::after {
-  content:''; position: absolute; top: 0; right: 0;
-  width: 30px; height: 30px;
-  border-top: 2px solid var(--accent);
-  border-right: 2px solid var(--accent);
-  opacity: 0; transition: 0.3s;
-}
-.card:hover::after { opacity: 1; }
-
-.card-title { font-size: 32px; font-weight: 300; margin-top: auto; }
-.card-meta { font-family: 'JetBrains Mono'; color: var(--text-muted); font-size: 12px; }
-
-.hidden-content { display: none; } /* Stored data for modal */
-
-/* --- THE FLIP MODAL --- */
-.clone-wrapper {
-  position: fixed; z-index: 1000;
-  background: #08080a;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 50px 100px rgba(0,0,0,0.9);
-  transform-origin: top left;
-  overflow: hidden;
-  will-change: transform, width, height, top, left;
-  transition: all 0.6s var(--ease-out-expo); /* The Open Animation */
-}
-
-/* Modal Inner Content */
-.modal-inner {
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.3s 0.2s, transform 0.3s 0.2s;
-  padding: 60px 40px; height: 100%;
-  background: radial-gradient(circle at top right, rgba(112, 0, 255, 0.1), transparent 50%);
-}
-.clone-wrapper.expanded .modal-inner { opacity: 1; transform: translateY(0); }
-
-/* The CLOSING State overrides */
-.clone-wrapper.is-closing {
-  transition: all 0.5s var(--ease-in-back); /* Snappier close */
-  border-color: transparent;
-}
-.clone-wrapper.is-closing .modal-inner {
-  opacity: 0; transition: 0.1s; /* Content vanishes instantly */
-}
-
-/* --- NEW BUTTONS --- */
-
-/* 1. ORBITAL CLOSE BUTTON */
-.btn-orbital {
-  position: absolute; top: 30px; right: 30px;
-  width: 50px; height: 50px;
-  background: transparent; border: none;
-  display: grid; place-items: center;
-  z-index: 10;
-  opacity: 0; transform: scale(0.5) rotate(-90deg);
-  transition: opacity 0.4s 0.3s, transform 0.4s 0.3s;
-}
-.clone-wrapper.expanded .btn-orbital { opacity: 1; transform: scale(1) rotate(0); }
-/* The fade out logic */
-.clone-wrapper.is-closing .btn-orbital { 
-  opacity: 0; transform: scale(0.5); transition: 0.2s; 
-}
-
-.orb-ring {
-  position: absolute; inset: 0; border: 1px dashed var(--accent); border-radius: 50%;
-  animation: spin 10s linear infinite;
-}
-.orb-center { font-size: 20px; color: #fff; }
-.btn-orbital:hover .orb-ring { border-style: solid; box-shadow: 0 0 15px var(--accent-glow); animation-duration: 2s; }
-
-/* 2. CYBER DOCK BUTTONS */
-.dock-container {
-  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 12px; z-index: 500;
-  transition: 0.4s var(--ease-out-expo);
-}
-body.modal-open .dock-container { transform: translate(-50%, 150%); }
-
-.cyber-btn {
-  position: relative;
-  width: 60px; height: 60px;
-  background: rgba(20, 20, 20, 0.6);
   backdrop-filter: blur(10px);
-  border: none;
-  color: var(--text-muted);
-  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-  transition: 0.3s;
+}
+.card:hover { transform: translateY(-10px); border-color: var(--glass-highlight); }
+.card::before { /* Scanline Sweep */
+  content:''; position: absolute; inset: 0;
+  background: linear-gradient(transparent, rgba(255,255,255,0.1), transparent);
+  transform: translateY(-100%); transition: 0.5s;
+}
+.card:hover::before { transform: translateY(100%); }
+
+.card-label { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--accent-secondary); margin-bottom: 10px; display: block;}
+.card h2 { font-size: 32px; font-weight: 300; }
+.card-footer { position: absolute; bottom: 30px; left: 30px; font-family: 'JetBrains Mono'; font-size: 12px; color: #666; }
+
+/* --- THE MODAL (CONSTRUCTOR) --- */
+.modal-ghost {
+  position: fixed; z-index: 1000;
+  background: #050505;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.1);
+  transform-origin: top left;
+  will-change: transform, width, height, top, left;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+  /* The Magic Transition */
+  transition: 
+    width 0.7s var(--ease-elastic),
+    height 0.7s var(--ease-elastic),
+    top 0.7s var(--ease-elastic),
+    left 0.7s var(--ease-elastic),
+    opacity 0.4s;
+}
+
+/* Modal Internal Layout */
+.modal-content {
+  opacity: 0; height: 100%; padding: 60px;
+  display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px;
+  background: 
+    radial-gradient(circle at top right, rgba(0, 240, 255, 0.05), transparent 40%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+.modal-ghost.active .modal-content { opacity: 1; transition: opacity 0.4s 0.2s; }
+
+/* Construction Scanner Effect */
+.scanner-line {
+  position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: var(--accent-secondary);
+  box-shadow: 0 0 20px var(--accent-secondary);
+  opacity: 0; pointer-events: none;
+}
+.modal-ghost.active .scanner-line {
+  opacity: 1; animation: scan-down 1s var(--ease-smooth) forwards;
+}
+@keyframes scan-down { 0% { top: 0; opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+/* Content Stagger */
+.stagger-in { opacity: 0; transform: translateY(20px); }
+.modal-ghost.active .stagger-in {
+  animation: slide-up 0.6s var(--ease-elastic) forwards;
+}
+@keyframes slide-up { to { opacity: 1; transform: translateY(0); } }
+
+/* --- GRAVITY CLOSE BUTTON --- */
+.close-gravity {
+  position: absolute; top: 30px; right: 30px;
+  width: 60px; height: 60px;
+  border: none; background: transparent;
+  z-index: 2000;
   display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: scale(0);
+  transition: opacity 0.3s, transform 0.3s var(--ease-elastic);
 }
-/* Scanline effect inside button */
-.cyber-btn::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent, var(--accent), transparent);
-  height: 20%; top: -20%; opacity: 0.3;
-  transition: 0.5s;
-}
-.cyber-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.cyber-btn:hover::before { top: 120%; } /* Scan down on hover */
+.modal-ghost.active .close-gravity { opacity: 1; transform: scale(1); transition-delay: 0.3s; }
 
-.cyber-btn::after { /* Corner Tick */
-  content:''; position: absolute; bottom: 2px; right: 2px;
-  width: 4px; height: 4px; background: var(--accent); opacity: 0;
-}
-.cyber-btn.active { color: var(--accent); border: 1px solid rgba(0, 243, 255, 0.3); }
-.cyber-btn.active::after { opacity: 1; }
+/* When closing, fade out fast */
+.modal-ghost.closing .close-gravity { opacity: 0; transform: scale(0.5); transition-delay: 0s; }
 
-@keyframes spin { 100% { transform: rotate(360deg); } }
-
-/* --- MODAL CONTENT STYLES --- */
-.m-label { font-family: 'JetBrains Mono'; color: var(--accent); font-size: 14px; margin-bottom: 10px; display:block;}
-.m-title { font-size: 60px; font-weight: 900; line-height: 0.9; margin-bottom: 40px; text-transform: uppercase; }
-.data-row { 
-  display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 20px 0;
-  font-family: 'JetBrains Mono'; font-size: 14px;
+.c-core {
+  width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent);
+  transition: 0.3s;
 }
+.c-orbit {
+  position: absolute; inset: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
+  transition: 0.3s;
+}
+.close-gravity:hover .c-core { transform: scale(1.5); background: #fff; box-shadow: 0 0 20px #fff; }
+.close-gravity:hover .c-orbit { border-color: var(--accent); transform: scale(1.1); }
+
+/* --- HIDDEN DATA --- */
+.data-source { display: none; }
+.stat-box {
+  border-top: 1px solid var(--glass-border); padding-top: 15px; margin-bottom: 20px;
+}
+.stat-val { font-size: 32px; font-weight: 600; color: #fff; }
+.stat-key { font-family: 'JetBrains Mono'; font-size: 12px; color: #666; }
 
 </style>
 </head>
 <body>
 
-<div class="vignette"></div>
-<div class="scanline"></div>
-<div class="bg-grid"></div>
+<div class="world-grid"></div>
+<div class="particles"></div>
+<div id="cursor"><div class="c-dot"></div><div class="c-circle"></div></div>
 
-<!-- Custom Cursor -->
-<div id="cursor"><div class="c-dot"></div><div class="c-ring"></div></div>
-
-<div id="app-root">
+<div id="app">
   <section class="hero">
-    <p>> Test 7</p>
-    <h1>The Next<br>Generation</h1>
+    <div style="font-family:'JetBrains Mono'; color:var(--accent-secondary); margin-bottom:10px;">/ SYSTEM 8.0</div>
+    <h1>HOLODECK<br>INTERFACE</h1>
   </section>
 
-  <div class="grid">
+  <div class="card-grid">
     
     <!-- CARD 1 -->
-    <div class="card hover-target" onclick="expand(this)">
-      <div class="card-meta">01 // OPERATOR</div>
-      <div style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
-        <h3 class="card-title">TEST</h3>
-      </div>
+    <div class="card magnet-target" onclick="openModal(this)">
+      <span class="card-label">01 // UNIT</span>
+      <h2>PSX<br>OPERATOR</h2>
+      <div class="card-footer">STATUS: ACTIVE</div>
       
-      <!-- Hidden Data -->
-      <div class="hidden-content">
-        <span class="m-label">UNIT ANALYSIS</span>
-        <h1 class="m-title">TEST<br>OPERATOR</h1>
-        <div class="data-row"><span>STATUS</span><span style="color:#0f0">ONLINE</span></div>
-        <div class="data-row"><span>KINETIC ENERGY</span><span>98%</span></div>
-        <div class="data-row"><span>NEURAL LINK</span><span>STABLE</span></div>
-        <br><br>
-        <p style="color:var(--text-muted); line-height:1.6">The TEST unit utilizes advanced crystal tracking algorithms to predict enemy movement 400ms into the future.</p>
+      <!-- DATA -->
+      <div class="data-source">
+        <div class="stagger-in" style="animation-delay: 0.1s">
+           <h1 style="font-size:60px; line-height:0.9; margin-bottom:20px; color:#fff">PSX<br>UNIT</h1>
+           <p style="color:#888; line-height:1.6; max-width:400px;">
+             The PSX Operator utilizes a quantum-entangled neural link for zero-latency combat awareness. Specialized in crystal destruction protocols.
+           </p>
+        </div>
+        <div class="stagger-in" style="animation-delay: 0.2s">
+           <div class="stat-box">
+             <div class="stat-val" data-scramble="98.4%">98.4%</div>
+             <div class="stat-key">COMBAT EFFICIENCY</div>
+           </div>
+           <div class="stat-box">
+             <div class="stat-val" data-scramble="2ms">2ms</div>
+             <div class="stat-key">NEURAL LATENCY</div>
+           </div>
+           <div class="stat-box">
+             <div class="stat-val" style="color:var(--accent-secondary)">ONLINE</div>
+             <div class="stat-key">SYSTEM STATUS</div>
+           </div>
+        </div>
       </div>
     </div>
 
     <!-- CARD 2 -->
-    <div class="card hover-target" onclick="expand(this)">
-      <div class="card-meta">02 // PROTOCOL</div>
-      <div style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
-        <h3 class="card-title">VEX</h3>
-      </div>
-       <div class="hidden-content">
-        <span class="m-label">DEFENSE PROTOCOL</span>
-        <h1 class="m-title">VEX<br>SYSTEM</h1>
-        <div class="data-row"><span>SHIELD INTEGRITY</span><span>100%</span></div>
-        <div class="data-row"><span>ANCHOR POINT</span><span>LOCKED</span></div>
-      </div>
-    </div>
-
-    <!-- CARD 3 -->
-    <div class="card hover-target" onclick="expand(this)">
-       <div class="card-meta">03 // EVENT</div>
-      <div style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
-        <h3 class="card-title">WAR</h3>
-      </div>
-      <div class="hidden-content">
-        <span class="m-label">ACTIVE CONFLICT</span>
-        <h1 class="m-title">DOMINATION</h1>
-        <div class="data-row"><span>TEST</span><span>4</span></div>
-        <div class="data-row"><span>VOID</span><span>1</span></div>
-        <div class="data-row" style="color:var(--accent)">VICTORY IMMINENT</div>
+    <div class="card magnet-target" onclick="openModal(this)">
+      <span class="card-label">02 // PROTOCOL</span>
+      <h2>VEX<br>DEFENSE</h2>
+      <div class="card-footer">STATUS: LOCKED</div>
+      
+      <div class="data-source">
+        <div class="stagger-in" style="animation-delay: 0.1s">
+           <h1 style="font-size:60px; line-height:0.9; margin-bottom:20px; color:#fff">VEX<br>SYS</h1>
+           <p style="color:#888; line-height:1.6; max-width:400px;">
+             Autonomous defense grid providing area denial and logistical support. The backbone of the /six formation.
+           </p>
+        </div>
+        <div class="stagger-in" style="animation-delay: 0.2s">
+           <div class="stat-box">
+             <div class="stat-val" data-scramble="100%">100%</div>
+             <div class="stat-key">SHIELD INTEGRITY</div>
+           </div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
 
-<!-- DOCK -->
-<div class="dock-container">
-  <button class="cyber-btn active hover-target"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
-  <button class="cyber-btn hover-target"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>
-  <button class="cyber-btn hover-target"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/></svg></button>
-</div>
-
 <script>
-/* --- CURSOR LOGIC --- */
+// --- CURSOR & MAGNETICS ---
 const cursor = document.getElementById('cursor');
-const ring = cursor.querySelector('.c-ring');
-let mouseX = -100, mouseY = -100;
+const circle = cursor.querySelector('.c-circle');
+const dot = cursor.querySelector('.c-dot');
+let mx = 0, my = 0;
+let cx = 0, cy = 0;
 
-document.addEventListener('mousemove', e => { 
-  mouseX = e.clientX; mouseY = e.clientY; 
-  cursor.querySelector('.c-dot').style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
-});
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 
-// Physics-based ring lag
-let ringX = 0, ringY = 0;
-function loop() {
-  ringX += (mouseX - ringX) * 0.15;
-  ringY += (mouseY - ringY) * 0.15;
-  ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
-  requestAnimationFrame(loop);
-}
-loop();
-
-// Hover Interactions
-document.querySelectorAll('.hover-target').forEach(el => {
-  el.addEventListener('mouseenter', () => ring.classList.add('active'));
-  el.addEventListener('mouseleave', () => ring.classList.remove('active'));
-});
-
-/* --- FLIP ANIMATION 2.0 --- */
-let activeClone = null;
-let originalCard = null;
-
-function expand(card) {
-  if(activeClone) return;
-  originalCard = card;
-  const rect = card.getBoundingClientRect();
-
-  // 1. Create Clone
-  const clone = document.createElement('div');
-  clone.className = 'clone-wrapper';
-  clone.style.top = rect.top + 'px';
-  clone.style.left = rect.left + 'px';
-  clone.style.width = rect.width + 'px';
-  clone.style.height = rect.height + 'px';
+// Smooth follow loop
+function updateCursor() {
+  cx += (mx - cx) * 0.15;
+  cy += (my - cy) * 0.15;
   
-  // 2. Inject Content (Orbital Button + Data)
-  const content = card.querySelector('.hidden-content').innerHTML;
-  clone.innerHTML = `
-    <button class="btn-orbital hover-target" onclick="collapse()">
-      <div class="orb-ring"></div>
-      <div class="orb-center">✕</div>
+  // Basic Position
+  dot.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+  circle.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
+  
+  requestAnimationFrame(updateCursor);
+}
+updateCursor();
+
+document.querySelectorAll('.magnet-target').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+});
+
+
+// --- SCRAMBLE TEXT EFFECT ---
+function scrambleText(element) {
+  const original = element.getAttribute('data-scramble') || element.innerText;
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/<>[]";
+  let iterations = 0;
+  
+  const interval = setInterval(() => {
+    element.innerText = original.split("").map((letter, index) => {
+      if(index < iterations) return original[index];
+      return chars[Math.floor(Math.random() * chars.length)];
+    }).join("");
+    
+    if(iterations >= original.length) clearInterval(interval);
+    iterations += 1/2; 
+  }, 30);
+}
+
+
+// --- THE FLIP ENGINE ---
+let activeModal = null;
+let sourceCard = null;
+
+function openModal(card) {
+  if (activeModal) return;
+  sourceCard = card;
+  
+  // 1. Measure
+  const rect = card.getBoundingClientRect();
+  
+  // 2. Create Ghost (The Animation Container)
+  const ghost = document.createElement('div');
+  ghost.classList.add('modal-ghost');
+  
+  // Initial State: Match Card exactly
+  ghost.style.top = rect.top + 'px';
+  ghost.style.left = rect.left + 'px';
+  ghost.style.width = rect.width + 'px';
+  ghost.style.height = rect.height + 'px';
+  
+  // 3. Inject Content
+  const contentHTML = card.querySelector('.data-source').innerHTML;
+  ghost.innerHTML = `
+    <div class="scanner-line"></div>
+    <button class="close-gravity magnet-target" onclick="closeModal()">
+      <div class="c-orbit"></div>
+      <div class="c-core"></div>
     </button>
-    <div class="modal-inner">
-      ${content}
+    <div class="modal-content">
+      ${contentHTML}
     </div>
   `;
-
-  document.body.appendChild(clone);
-
-  // 3. FLIP Execution
+  
+  document.body.appendChild(ghost);
+  
+  // 4. Interaction Lock & Visual Feedback
+  document.body.classList.add('has-modal');
+  card.style.opacity = '0'; // Hide original
+  
+  // 5. Expand (Next Frame)
   requestAnimationFrame(() => {
-    // Hide original & Dim App
-    card.style.opacity = 0;
-    document.body.classList.add('modal-open');
-
-    // Calculate Expanded State
-    requestAnimationFrame(() => {
-      clone.classList.add('expanded');
-      
-      const isMobile = window.innerWidth < 768;
-      const w = isMobile ? window.innerWidth * 0.9 : 800;
-      const h = isMobile ? window.innerHeight * 0.8 : 600;
-      
-      clone.style.width = w + 'px';
-      clone.style.height = h + 'px';
-      clone.style.top = (window.innerHeight - h)/2 + 'px';
-      clone.style.left = (window.innerWidth - w)/2 + 'px';
-      
-      // Re-bind hover for the new button
-      const newBtn = clone.querySelector('.btn-orbital');
-      newBtn.addEventListener('mouseenter', () => ring.classList.add('active'));
-      newBtn.addEventListener('mouseleave', () => ring.classList.remove('active'));
-    });
+    ghost.classList.add('active');
+    
+    // Calculate Center
+    const isMobile = window.innerWidth < 800;
+    const w = isMobile ? window.innerWidth * 0.9 : 900;
+    const h = isMobile ? window.innerHeight * 0.8 : 600;
+    
+    ghost.style.width = w + 'px';
+    ghost.style.height = h + 'px';
+    ghost.style.top = (window.innerHeight - h) / 2 + 'px';
+    ghost.style.left = (window.innerWidth - w) / 2 + 'px';
+    
+    // Trigger Text Scramble
+    ghost.querySelectorAll('[data-scramble]').forEach(el => scrambleText(el));
+    
+    // Add magnet hover to new close button
+    const closeBtn = ghost.querySelector('.close-gravity');
+    closeBtn.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+    closeBtn.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
   });
   
-  activeClone = clone;
+  activeModal = ghost;
 }
 
-function collapse() {
-  if(!activeClone) return;
-  const rect = originalCard.getBoundingClientRect();
-
-  // 1. Trigger Close State (Fades out button & content immediately)
-  activeClone.classList.add('is-closing');
-  activeClone.classList.remove('expanded');
-
-  // 2. Wait a split second, then shrink box (Cinematic separation)
-  setTimeout(() => {
-    document.body.classList.remove('modal-open');
-    
-    activeClone.style.width = rect.width + 'px';
-    activeClone.style.height = rect.height + 'px';
-    activeClone.style.top = rect.top + 'px';
-    activeClone.style.left = rect.left + 'px';
-  }, 50); 
-
+function closeModal() {
+  if (!activeModal) return;
+  const rect = sourceCard.getBoundingClientRect();
+  
+  // 1. Remove Active States
+  activeModal.classList.remove('active');
+  activeModal.classList.add('closing'); // Fades out content/button immediately
+  document.body.classList.remove('has-modal');
+  
+  // 2. Shrink Back
+  activeModal.style.width = rect.width + 'px';
+  activeModal.style.height = rect.height + 'px';
+  activeModal.style.top = rect.top + 'px';
+  activeModal.style.left = rect.left + 'px';
+  
   // 3. Cleanup
   setTimeout(() => {
-    if(activeClone) activeClone.remove();
-    if(originalCard) originalCard.style.opacity = 1;
-    activeClone = null;
-    originalCard = null;
-  }, 600); // Matches CSS transition time
+    sourceCard.style.opacity = '1';
+    activeModal.remove();
+    activeModal = null;
+    sourceCard = null;
+  }, 700); // Wait for transition
 }
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape') collapse(); });
+// Close on Escape
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
 
 </script>
 </body>
