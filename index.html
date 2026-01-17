@@ -2,568 +2,468 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SYSTEM 8.0 // SINGULARITY</title>
+<title>System OS // Unified</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;900&family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
+/* --- CORE & OPTIMIZATION --- */
 :root {
-  --bg: #020203;
-  --hex-dark: #0a0a0f;
-  --neon-blue: #00f0ff;
-  --neon-red: #ff003c;
-  --neon-gold: #fcee0a;
-  --glass: rgba(255, 255, 255, 0.05);
-  --border: rgba(255, 255, 255, 0.1);
-  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  /* SHARED */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; cursor: none; user-select: none; }
 
 body {
-  font-family: 'Rajdhani', sans-serif;
-  background-color: var(--bg);
-  color: #fff;
-  height: 100vh; width: 100vw;
-  overflow: hidden;
-}
-
-/* --- BOOT LOADER --- */
-#boot-screen {
-  position: fixed; inset: 0; z-index: 10000;
+  overflow: hidden; height: 100vh; width: 100vw;
   background: #000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity 0.5s;
+  transition: background 0.5s;
 }
-.boot-text { font-family: 'Share Tech Mono'; color: var(--neon-blue); font-size: 24px; margin-bottom: 20px; }
-.loader-bar { width: 300px; height: 2px; background: #222; position: relative; overflow: hidden; }
-.loader-fill { 
-  position: absolute; left: 0; top: 0; height: 100%; width: 0%; 
-  background: var(--neon-blue); 
-  box-shadow: 0 0 20px var(--neon-blue);
-  animation: load 2s cubic-bezier(0.2, 0, 0, 1) forwards; 
-}
-@keyframes load { 100% { width: 100%; } }
 
-/* --- BACKGROUNDS --- */
-#neural-canvas { position: fixed; inset: 0; z-index: 0; opacity: 0.4; }
-.noise-overlay {
-  position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJnoiPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjY1IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2cpIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+');
+/* --- VERSION SWITCHER --- */
+#ver-switch {
+  position: fixed; top: 20px; right: 20px; z-index: 10000;
+  display: flex; gap: 10px; background: rgba(0,0,0,0.8);
+  padding: 5px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
 }
-.vignette {
-  position: fixed; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(circle at center, transparent 40%, #000 100%);
+.ver-btn {
+  font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 700;
+  background: transparent; border: none; color: #666;
+  padding: 8px 16px; border-radius: 20px; cursor: none;
+  transition: 0.3s;
 }
+.ver-btn.active { background: #fff; color: #000; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
 
 /* --- CURSOR --- */
 #cursor {
-  position: fixed; z-index: 9999; pointer-events: none;
-  mix-blend-mode: exclusion;
+  position: fixed; top: 0; left: 0; z-index: 10001; pointer-events: none;
+  mix-blend-mode: difference;
 }
-.c-center { 
-  width: 4px; height: 4px; background: var(--neon-blue); border-radius: 50%; 
-  position: absolute; transform: translate(-50%, -50%);
+.c-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); }
+.c-ring { 
+  width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.5); 
+  border-radius: 50%; position: absolute; transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, border-color 0.2s;
 }
-.c-guide {
-  width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.3);
-  position: absolute; transform: translate(-50%, -50%);
-  transition: 0.1s;
+body:hover .c-ring.hovered { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-color: #fff; }
+
+/* =========================================
+   SYSTEM 7.0 STYLES (Cyberpunk Grid)
+   ========================================= */
+[data-version="7"] {
+  --bg: #030304;
+  --surface: rgba(20, 20, 25, 0.4);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #00f3ff;
+  --text: #ffffff;
+  font-family: 'Inter', sans-serif;
 }
-/* Crosshair lines */
-.c-guide::before, .c-guide::after {
-  content: ''; position: absolute; background: var(--neon-blue);
+
+[data-version="7"] .v7-wrapper {
+  display: block; opacity: 1; pointer-events: all;
+}
+[data-version="7"] .v8-wrapper {
+  display: none; opacity: 0; pointer-events: none;
+}
+
+.v7-bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform: perspective(1000px) rotateX(10deg) scale(1.5);
+  transform-origin: top center;
+  opacity: 0.5;
+}
+.v7-scanline {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
+  background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 51%);
+  background-size: 100% 4px; opacity: 0.6;
+}
+
+.v7-container {
+  padding: 100px 5vw; height: 100vh; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--accent) transparent;
+}
+.v7-hero h1 {
+  font-size: 5rem; font-weight: 900; letter-spacing: -2px; text-transform: uppercase;
+  background: linear-gradient(180deg, #fff, #666); -webkit-background-clip: text; color: transparent;
+}
+.v7-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; margin-top: 50px;}
+
+.v7-card {
+  height: 300px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 30px; position: relative; transition: 0.3s;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.v7-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0, 243, 255, 0.1); }
+.v7-meta { font-family: 'JetBrains Mono'; color: #777; font-size: 12px; position: absolute; top: 30px; left: 30px; }
+.v7-title { font-size: 32px; font-weight: 300; }
+
+/* =========================================
+   SYSTEM 8.0 STYLES (Aero / Spatial / Glass)
+   ========================================= */
+[data-version="8"] {
+  --bg: #0a0a0a;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent: #ff3e00; /* Neon Orange */
+  --accent-sec: #0077ff;
+  --text: #ffffff;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+[data-version="8"] body { background: #050505; }
+[data-version="8"] .v7-wrapper { display: none; }
+[data-version="8"] .v8-wrapper { display: flex; opacity: 1; pointer-events: all; }
+
+/* Animated Liquid Background */
+.v8-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4;
+  animation: float 10s infinite ease-in-out;
+}
+.orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--accent); animation-delay: 0s; }
+.orb-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: var(--accent-sec); animation-delay: -5s; }
+
+@keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px, 50px); } }
+
+/* V8 Layout */
+.v8-wrapper {
+  position: fixed; inset: 0; display: flex;
+  background: rgba(0,0,0,0.2);
+  perspective: 2000px; /* For 3D Tilt */
+}
+
+/* Sidebar */
+.v8-sidebar {
+  width: 80px; height: 100vh;
+  background: rgba(10,10,10,0.6); backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  display: flex; flex-direction: column; align-items: center; padding-top: 100px; gap: 40px;
+  z-index: 100;
+}
+.v8-nav-item {
+  width: 50px; height: 50px; border-radius: 12px;
+  display: grid; place-items: center; color: #555; transition: 0.3s;
+}
+.v8-nav-item.active { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+
+/* Main Stage */
+.v8-stage {
+  flex: 1; position: relative; padding: 40px;
+  display: flex; align-items: center; justify-content: center;
+  transform-style: preserve-3d; /* Key for spatial effect */
+  transition: transform 0.1s;
+}
+
+/* Content Panel (Spatial Object) */
+.v8-panel {
+  width: 90%; height: 85%;
+  background: rgba(20, 20, 20, 0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 30px;
+  backdrop-filter: blur(40px);
+  box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5);
+  display: grid; grid-template-columns: 2fr 1fr;
+  overflow: hidden;
+  transform: translateZ(20px);
+}
+
+/* Panel Sections */
+.v8-content-left { padding: 60px; display: flex; flex-direction: column; position: relative;}
+.v8-content-right { 
+  background: rgba(255,255,255,0.02); border-left: 1px solid var(--glass-border); 
+  padding: 40px; display: flex; flex-direction: column; gap: 20px;
+}
+
+/* Typography V8 */
+.v8-h1 { font-size: 6rem; line-height: 0.9; margin-bottom: 20px; font-weight: 700; text-transform: uppercase; }
+.v8-tag { 
+  font-family: 'JetBrains Mono'; font-size: 10px; padding: 5px 10px; 
+  border: 1px solid var(--accent); color: var(--accent); 
+  width: fit-content; border-radius: 20px; margin-bottom: 20px;
+}
+.v8-desc { font-size: 1.2rem; color: #888; max-width: 500px; }
+
+/* Canvas Waveform */
+#waveCanvas {
+  position: absolute; bottom: 0; left: 0; width: 100%; height: 150px;
+  opacity: 0.5; mix-blend-mode: screen; pointer-events: none;
+}
+
+/* Section Switching Animation */
+.section-view {
+  position: absolute; inset: 0; padding: 60px;
+  opacity: 0; transform: scale(1.1) translateY(20px) filter(blur(20px));
+  transition: 0.6s var(--ease-out-expo);
+  pointer-events: none;
+}
+.section-view.active-sec {
+  opacity: 1; transform: scale(1) translateY(0) filter(blur(0));
+  pointer-events: all;
+}
+
+/* Widgets */
+.v8-widget {
+  background: rgba(0,0,0,0.3); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);
   transition: 0.3s;
 }
-.c-guide::before { top: -5px; left: 50%; width: 1px; height: 4px; transform: translateX(-50%); }
-.c-guide::after { left: -5px; top: 50%; height: 1px; width: 4px; transform: translateY(-50%); }
-
-body:hover .c-guide.active { width: 60px; height: 60px; border-color: var(--neon-red); transform: translate(-50%, -50%) rotate(45deg); }
-
-/* --- THE OMNI SEARCH (THE EYE) --- */
-.omni-container {
-  position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
-  z-index: 100; display: flex; align-items: center; gap: 20px;
-}
-.eye-wrapper {
-  width: 50px; height: 50px; border: 1px solid var(--border);
-  border-radius: 50%; display: grid; place-items: center;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-  position: relative;
-}
-.eye-ball {
-  width: 20px; height: 20px; border: 1px solid var(--neon-blue);
-  border-radius: 50%; position: relative;
-  transition: 0.1s ease-out; /* Smooth tracking */
-  box-shadow: 0 0 10px var(--neon-blue);
-}
-.eye-pupil {
-  width: 6px; height: 6px; background: #fff; border-radius: 50%;
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-}
-.search-input-wrap {
-  width: 0; overflow: hidden; transition: 0.5s var(--ease-elastic);
-  border-bottom: 1px solid transparent;
-}
-.omni-container:hover .search-input-wrap, .search-input-wrap.active {
-  width: 300px; border-bottom-color: var(--neon-blue);
-}
-.omni-input {
-  width: 100%; background: transparent; border: none; color: #fff;
-  font-family: 'Share Tech Mono'; font-size: 16px; padding: 10px;
-  text-transform: uppercase; outline: none;
-}
-
-/* --- MAIN LAYOUT --- */
-#app-viewport {
-  height: 100vh; overflow-y: auto; overflow-x: hidden;
-  padding: 150px 5vw; perspective: 1000px;
-  scrollbar-width: none; /* Hide standard scroll */
-}
-
-.hero-section {
-  text-align: center; margin-bottom: 100px; position: relative; z-index: 5;
-  mix-blend-mode: lighten;
-}
-.hero-glitch {
-  font-size: clamp(4rem, 10vw, 8rem); font-weight: 700; line-height: 0.8;
-  color: #fff; position: relative;
-}
-.hero-glitch::before, .hero-glitch::after {
-  content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
-}
-.hero-glitch::before { color: var(--neon-red); z-index: -1; animation: glitch-1 2s infinite reverse; }
-.hero-glitch::after { color: var(--neon-blue); z-index: -2; animation: glitch-2 2s infinite; }
-
-@keyframes glitch-1 {
-  0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); } 100% { transform: translate(0); }
-}
-@keyframes glitch-2 {
-  0% { transform: translate(0); } 20% { transform: translate(2px, -2px); }
-  40% { transform: translate(2px, 2px); } 60% { transform: translate(-2px, 2px); }
-  80% { transform: translate(-2px, -2px); } 100% { transform: translate(0); }
-}
-
-/* --- 3D CARDS --- */
-.card-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px;
-  padding-bottom: 100px;
-}
-.holo-card {
-  height: 400px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-  border: 1px solid var(--border);
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.1s, box-shadow 0.3s; /* Short transition for tilt */
-}
-.holo-card::before {
-  content:''; position: absolute; inset: -1px; z-index: -1;
-  background: linear-gradient(45deg, var(--neon-blue), transparent, var(--neon-red));
-  opacity: 0; transition: 0.4s;
-}
-.holo-card:hover::before { opacity: 0.3; }
-
-.holo-content {
-  position: absolute; inset: 0; padding: 30px;
-  display: flex; flex-direction: column; justify-content: space-between;
-  background: rgba(5, 5, 8, 0.85);
-  transform: translateZ(20px); /* Parallax depth */
-  backdrop-filter: blur(10px);
-}
-
-.c-num { font-family: 'Share Tech Mono'; color: var(--neon-gold); font-size: 14px; }
-.c-head { font-size: 40px; font-weight: 300; text-transform: uppercase; margin-bottom: 10px; }
-.c-stat { 
-  font-family: 'Share Tech Mono'; font-size: 12px; color: #888; 
-  border-top: 1px solid var(--border); padding-top: 15px; margin-top: auto;
-  display: flex; justify-content: space-between;
-}
-
-/* --- DECRYPT TEXT EFFECT CLASS --- */
-.decrypt-effect { display: inline-block; white-space: nowrap; }
-
-/* --- HUD SCROLLBAR --- */
-.hud-scroll {
-  position: fixed; left: 30px; top: 50%; transform: translateY(-50%);
-  height: 60vh; width: 4px; background: rgba(255,255,255,0.1);
-  z-index: 50; border-radius: 2px;
-}
-.hud-thumb {
-  width: 100%; height: 10%; background: var(--neon-blue);
-  box-shadow: 0 0 15px var(--neon-blue);
-  position: relative;
-}
-.hud-label {
-  position: absolute; left: 15px; top: 0;
-  font-family: 'Share Tech Mono'; color: var(--neon-blue);
-  font-size: 12px; white-space: nowrap;
-}
-
-/* --- DOCK --- */
-.cyber-dock {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-  background: rgba(10,10,10,0.8); border: 1px solid var(--border);
-  padding: 10px 20px; border-radius: 50px;
-  display: flex; gap: 20px; backdrop-filter: blur(10px); z-index: 200;
-}
-.dock-item {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
-  display: grid; place-items: center; color: #aaa;
-  transition: 0.3s var(--ease-elastic); position: relative;
-}
-.dock-item:hover { 
-  transform: translateY(-10px) scale(1.2); 
-  background: var(--neon-blue); color: #000; box-shadow: 0 5px 20px var(--neon-blue);
-  border-color: transparent;
-}
+.v8-widget:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.prog-bar { width: 100%; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--accent); width: 0%; transition: width 1s ease-in-out; }
 
 </style>
 </head>
-<body>
+<body data-version="7">
 
-<!-- Boot Screen -->
-<div id="boot-screen">
-  <div class="boot-text">INITIALIZING SYSTEM 8.0...</div>
-  <div class="loader-bar"><div class="loader-fill"></div></div>
+<!-- GLOBAL ELEMENTS -->
+<div id="cursor"><div class="c-dot"></div><div class="c-ring"></div></div>
+
+<div id="ver-switch" class="hover-target">
+  <button class="ver-btn active" onclick="switchVersion(7)">SYS 7.0</button>
+  <button class="ver-btn" onclick="switchVersion(8)">SYS 8.0</button>
 </div>
 
-<!-- Backgrounds -->
-<canvas id="neural-canvas"></canvas>
-<div class="noise-overlay"></div>
-<div class="vignette"></div>
+<!-- =======================
+     VERSION 7.0 INTERFACE
+     ======================= -->
+<div class="v7-wrapper">
+  <div class="v7-bg-grid"></div>
+  <div class="v7-scanline"></div>
+  
+  <div class="v7-container">
+    <section class="v7-hero">
+      <p style="font-family:'JetBrains Mono'; color: #00f3ff; margin-bottom:10px">> SYSTEM_READY</p>
+      <h1>Legacy<br>Grid</h1>
+    </section>
 
-<!-- Cursor -->
-<div id="cursor">
-  <div class="c-guide"></div>
-  <div class="c-center"></div>
-</div>
-
-<!-- The Omni Eye Search -->
-<div class="omni-container hover-trigger" data-sound="hover">
-  <div class="eye-wrapper">
-    <div class="eye-ball"><div class="eye-pupil"></div></div>
-  </div>
-  <div class="search-input-wrap">
-    <input type="text" class="omni-input" placeholder="ENTER_COMMAND //">
-  </div>
-</div>
-
-<!-- HUD Scroll -->
-<div class="hud-scroll">
-  <div class="hud-thumb" id="scroll-thumb">
-    <div class="hud-label">SCROLL_Y: <span id="scroll-val">000</span></div>
-  </div>
-</div>
-
-<!-- Main Content -->
-<div id="app-viewport">
-  <section class="hero-section">
-    <div class="hero-glitch" data-text="SYSTEM 8">SYSTEM 8</div>
-    <p style="font-family: 'Share Tech Mono'; color: var(--neon-blue); margin-top: 20px;" class="decrypt-effect" data-value="AURAL // VISUAL // NEURAL">LOADING...</p>
-  </section>
-
-  <div class="card-grid">
-    <!-- Card 1 -->
-    <div class="holo-card hover-trigger" data-sound="hover">
-      <div class="holo-content">
-        <div>
-          <div class="c-num">01</div>
-          <h2 class="c-head decrypt-effect" data-value="NEXUS">---</h2>
-          <p style="color:#aaa; font-size: 14px; line-height: 1.5;">Neural linking initialized. Kinetic feedback loops active. Integration at 99%.</p>
-        </div>
-        <div class="c-stat"><span>CPU: 4.2GHZ</span><span style="color:var(--neon-blue)">STABLE</span></div>
+    <div class="v7-grid">
+      <div class="v7-card hover-target">
+        <div class="v7-meta">01 // CORE</div>
+        <h3 class="v7-title">Analysis</h3>
       </div>
-    </div>
-
-    <!-- Card 2 -->
-    <div class="holo-card hover-trigger" data-sound="hover">
-      <div class="holo-content">
-        <div>
-          <div class="c-num">02</div>
-          <h2 class="c-head decrypt-effect" data-value="VORTEX">---</h2>
-          <p style="color:#aaa; font-size: 14px; line-height: 1.5;">Spatial distortion field generated. Warning: Gravity fluctuations detected.</p>
-        </div>
-        <div class="c-stat"><span>SHIELD</span><span style="color:var(--neon-red)">CRITICAL</span></div>
+      <div class="v7-card hover-target">
+        <div class="v7-meta">02 // NET</div>
+        <h3 class="v7-title">Protocol</h3>
       </div>
-    </div>
-
-    <!-- Card 3 -->
-    <div class="holo-card hover-trigger" data-sound="hover">
-      <div class="holo-content">
-        <div>
-          <div class="c-num">03</div>
-          <h2 class="c-head decrypt-effect" data-value="AEGIS">---</h2>
-          <p style="color:#aaa; font-size: 14px; line-height: 1.5;">Firewall protocol engaged. Encrypted data streams are secure.</p>
-        </div>
-        <div class="c-stat"><span>SEC</span><span style="color:var(--neon-gold)">LOCKED</span></div>
+      <div class="v7-card hover-target">
+        <div class="v7-meta">03 // SEC</div>
+        <h3 class="v7-title">Firewall</h3>
       </div>
-    </div>
-    
-     <!-- Card 4 -->
-    <div class="holo-card hover-trigger" data-sound="hover">
-      <div class="holo-content">
-        <div>
-          <div class="c-num">04</div>
-          <h2 class="c-head decrypt-effect" data-value="PROXY">---</h2>
-          <p style="color:#aaa; font-size: 14px; line-height: 1.5;">Remote link established. Latency: 2ms.</p>
-        </div>
-        <div class="c-stat"><span>PING</span><span style="color:var(--neon-blue)">OPTIMAL</span></div>
+       <div class="v7-card hover-target">
+        <div class="v7-meta">04 // NULL</div>
+        <h3 class="v7-title">Echo</h3>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Dock -->
-<div class="cyber-dock">
-  <div class="dock-item hover-trigger" data-sound="click">A</div>
-  <div class="dock-item hover-trigger" data-sound="click">B</div>
-  <div class="dock-item hover-trigger" data-sound="click">C</div>
+<!-- =======================
+     VERSION 8.0 INTERFACE
+     ======================= -->
+<div class="v8-wrapper">
+  <div class="v8-orb orb-1"></div>
+  <div class="v8-orb orb-2"></div>
+
+  <!-- V8 Navigation Rail -->
+  <aside class="v8-sidebar">
+    <div class="v8-nav-item active hover-target" onclick="navTo('home', this)">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="v8-nav-item hover-target" onclick="navTo('data', this)">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div class="v8-nav-item hover-target" onclick="navTo('settings', this)">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+  </aside>
+
+  <main class="v8-stage" id="tiltStage">
+    <div class="v8-panel">
+      
+      <div class="v8-content-left">
+        <!-- VIEW: HOME -->
+        <div id="view-home" class="section-view active-sec">
+          <div class="v8-tag">SPATIAL UI v8.0</div>
+          <h1 class="v8-h1">Aero<br>Glass</h1>
+          <p class="v8-desc">Experience the next generation of interface design. Featuring real-time spatial parallax, canvas signal processing, and frosted material physics.</p>
+        </div>
+
+        <!-- VIEW: DATA -->
+        <div id="view-data" class="section-view">
+          <div class="v8-tag">NEURAL LINK</div>
+          <h1 class="v8-h1">Data<br>Stream</h1>
+          <div class="v7-grid" style="margin-top:20px; grid-template-columns: 1fr 1fr;">
+             <div class="v8-widget hover-target">
+               <h4>UPLINK</h4><h2 style="color:var(--accent)">450 MB/s</h2>
+             </div>
+             <div class="v8-widget hover-target">
+               <h4>LATENCY</h4><h2 style="color:var(--accent-sec)">12 ms</h2>
+             </div>
+          </div>
+        </div>
+
+        <!-- VIEW: SETTINGS -->
+        <div id="view-settings" class="section-view">
+          <div class="v8-tag">CONFIGURATION</div>
+          <h1 class="v8-h1">System<br>Core</h1>
+          <p class="v8-desc">Adjusting kernel parameters requires root access.</p>
+        </div>
+
+        <canvas id="waveCanvas"></canvas>
+      </div>
+
+      <div class="v8-content-right">
+        <div class="v8-widget hover-target">
+          <span style="font-size:10px; color:#888;">CPU LOAD</span>
+          <div class="prog-bar"><div class="prog-fill" style="width: 24%"></div></div>
+        </div>
+        <div class="v8-widget hover-target">
+          <span style="font-size:10px; color:#888;">MEMORY</span>
+          <div class="prog-bar"><div class="prog-fill" style="width: 68%"></div></div>
+        </div>
+        <div class="v8-widget hover-target" style="margin-top:auto; background: var(--accent); color:#000; border:none;">
+          <b>INITIALIZE</b>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
 <script>
-/* --- 1. BOOT SEQUENCE --- */
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('boot-screen').style.opacity = '0';
-    setTimeout(() => {
-      document.getElementById('boot-screen').style.display = 'none';
-      initAudio(); // Prepare audio context
-    }, 500);
-  }, 2200);
-});
-
-/* --- 2. AUDIO SYSTEM (Procedural SFX) --- */
-let audioCtx;
-function initAudio() {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  audioCtx = new AudioContext();
-}
-
-function playSound(type) {
-  if (!audioCtx) return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  const now = audioCtx.currentTime;
-
-  if (type === 'hover') {
-    // High tech chirp
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-    osc.start(now);
-    osc.stop(now + 0.05);
-  } else if (type === 'click') {
-    // Bass thud
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(100, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
-    gain.gain.setValueAtTime(0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-    osc.start(now);
-    osc.stop(now + 0.1);
-  }
-}
-
-document.querySelectorAll('.hover-trigger').forEach(el => {
-  el.addEventListener('mouseenter', () => playSound('hover'));
-  el.addEventListener('click', () => playSound('click'));
-});
-
-/* --- 3. CURSOR & EYE TRACKING --- */
+/* --- CURSOR ENGINE --- */
 const cursor = document.getElementById('cursor');
-const guide = document.querySelector('.c-guide');
-const eyeBall = document.querySelector('.eye-ball');
-const eyePupil = document.querySelector('.eye-pupil');
-let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+const ring = cursor.querySelector('.c-ring');
+let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
 
-document.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
+document.addEventListener('mousemove', e => { 
+  mouseX = e.clientX; mouseY = e.clientY;
+  // Update dot instantly
+  cursor.querySelector('.c-dot').style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+});
+
+// Smooth ring follow
+let ringX = mouseX, ringY = mouseY;
+function loop() {
+  ringX += (mouseX - ringX) * 0.15;
+  ringY += (mouseY - ringY) * 0.15;
+  ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
   
-  // Move Cursor
-  cursor.style.left = mouseX + 'px';
-  cursor.style.top = mouseY + 'px';
+  // V8 Parallax Tilt Logic
+  if(document.body.getAttribute('data-version') === "8") {
+    const tiltStage = document.getElementById('tiltStage');
+    const rotateX = (window.innerHeight/2 - mouseY) * 0.01; // reduced intensity
+    const rotateY = (mouseX - window.innerWidth/2) * 0.01;
+    tiltStage.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  }
 
-  // Eye Tracking Math
-  const eyeRect = eyeBall.getBoundingClientRect();
-  const eyeCenterX = eyeRect.left + eyeRect.width / 2;
-  const eyeCenterY = eyeRect.top + eyeRect.height / 2;
-  const angle = Math.atan2(mouseY - eyeCenterY, mouseX - eyeCenterX);
-  const distance = Math.min(6, Math.hypot(mouseX - eyeCenterX, mouseY - eyeCenterY) / 10); // Limit movement
+  requestAnimationFrame(loop);
+}
+loop();
 
-  const pupilX = Math.cos(angle) * distance;
-  const pupilY = Math.sin(angle) * distance;
-
-  eyePupil.style.transform = `translate(calc(-50% + ${pupilX}px), calc(-50% + ${pupilY}px))`;
+// Hover Effects
+document.querySelectorAll('.hover-target').forEach(el => {
+  el.addEventListener('mouseenter', () => ring.classList.add('hovered'));
+  el.addEventListener('mouseleave', () => ring.classList.remove('hovered'));
 });
 
-// Cursor Interactions
-document.querySelectorAll('a, button, .hover-trigger, input').forEach(el => {
-  el.addEventListener('mouseenter', () => guide.classList.add('active'));
-  el.addEventListener('mouseleave', () => guide.classList.remove('active'));
-});
+/* --- VERSION CONTROL --- */
+function switchVersion(ver) {
+  document.body.setAttribute('data-version', ver);
+  
+  // Update Buttons
+  document.querySelectorAll('.ver-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ver-btn')[ver === 7 ? 0 : 1].classList.add('active');
+  
+  // Reset animations or states if needed
+  if(ver === 8) {
+    initWave(); // Restart canvas if V8
+    simulateLoad();
+  }
+}
 
-/* --- 4. NEURAL CANVAS BACKGROUND --- */
-const canvas = document.getElementById('neural-canvas');
+/* --- V8 SECTION NAVIGATION --- */
+function navTo(sectionId, btn) {
+  // 1. Handle Active State on Nav Rail
+  document.querySelectorAll('.v8-nav-item').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+
+  // 2. Handle Section Transition (Blur Fade)
+  document.querySelectorAll('.section-view').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'scale(1.1) translateY(20px) filter(blur(20px))';
+    el.style.pointerEvents = 'none';
+  });
+
+  // 3. Activate Target
+  const target = document.getElementById('view-' + sectionId);
+  setTimeout(() => {
+    target.style.opacity = '1';
+    target.style.transform = 'scale(1) translateY(0) filter(blur(0))';
+    target.style.pointerEvents = 'all';
+  }, 100);
+}
+
+/* --- V8 CANVAS WAVEFORM --- */
+const canvas = document.getElementById('waveCanvas');
 const ctx = canvas.getContext('2d');
-let width, height, particles;
+let waveStep = 0;
 
-function resize() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.offsetWidth;
+  canvas.height = 150;
 }
-window.addEventListener('resize', resize);
-resize();
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-class Particle {
-  constructor() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.vx = (Math.random() - 0.5) * 0.5;
-    this.vy = (Math.random() - 0.5) * 0.5;
-    this.size = Math.random() * 2;
-  }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
+function initWave() {
+  function draw() {
+    if(document.body.getAttribute('data-version') !== "8") return requestAnimationFrame(draw);
     
-    // Mouse repulsion
-    const dx = mouseX - this.x;
-    const dy = mouseY - this.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if(dist < 150) {
-      const forceDirectionX = dx / dist;
-      const forceDirectionY = dy / dist;
-      const force = (150 - dist) / 150;
-      this.vx -= forceDirectionX * force * 0.5;
-      this.vy -= forceDirectionY * force * 0.5;
-    }
-
-    if (this.x < 0 || this.x > width) this.vx *= -1;
-    if (this.y < 0 || this.y > height) this.vy *= -1;
-  }
-  draw() {
-    ctx.fillStyle = '#00f0ff';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function initParticles() {
-  particles = [];
-  for (let i = 0; i < 60; i++) particles.push(new Particle());
-}
-initParticles();
-
-function animateParticles() {
-  ctx.clearRect(0, 0, width, height);
-  
-  particles.forEach((p, index) => {
-    p.update();
-    p.draw();
     
-    // Connect lines
-    for(let j = index; j < particles.length; j++) {
-      const p2 = particles[j];
-      const dx = p.x - p2.x;
-      const dy = p.y - p2.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if(dist < 150) {
-        ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist/150})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-      }
+    // Gradient Line
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    grad.addColorStop(0, '#ff3e00');
+    grad.addColorStop(1, '#0077ff');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2;
+
+    for(let x = 0; x < canvas.width; x++) {
+      // Sine wave math
+      const y = Math.sin(x * 0.02 + waveStep) * 20 + (Math.sin(x * 0.05 + waveStep*2) * 10) + canvas.height/2;
+      ctx.lineTo(x, y);
     }
-  });
-  requestAnimationFrame(animateParticles);
+    
+    ctx.stroke();
+    waveStep += 0.05;
+    requestAnimationFrame(draw);
+  }
+  draw();
 }
-animateParticles();
 
-/* --- 5. 3D GYROSCOPIC CARDS --- */
-document.querySelectorAll('.holo-card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const rotateX = ((y - centerY) / centerY) * -10; // Max tilt 10deg
-    const rotateY = ((x - centerX) / centerX) * 10;
-    
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  });
-  
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
-  });
-});
+/* --- SIMULATED CPU DATA --- */
+function simulateLoad() {
+  const bars = document.querySelectorAll('.prog-fill');
+  setInterval(() => {
+    if(document.body.getAttribute('data-version') === "8") {
+      bars.forEach(bar => {
+        bar.style.width = Math.floor(Math.random() * 80 + 20) + '%';
+      });
+    }
+  }, 2000);
+}
 
-/* --- 6. TEXT DECRYPTION EFFECT --- */
-const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
-document.querySelectorAll('.decrypt-effect').forEach(el => {
-  const originalText = el.getAttribute('data-value');
-  let interval = null;
-  
-  el.addEventListener('mouseover', () => {
-    let iteration = 0;
-    clearInterval(interval);
-    
-    interval = setInterval(() => {
-      el.innerText = originalText
-        .split("")
-        .map((letter, index) => {
-          if(index < iteration) {
-            return originalText[index];
-          }
-          return chars[Math.floor(Math.random() * 26)];
-        })
-        .join("");
-      
-      if(iteration >= originalText.length){ 
-        clearInterval(interval);
-      }
-      iteration += 1 / 3;
-    }, 30);
-  });
-  
-  // Set initial text
-  el.innerText = originalText;
-});
-
-/* --- 7. HUD SCROLL SYNC --- */
-const viewport = document.getElementById('app-viewport');
-const thumb = document.getElementById('scroll-thumb');
-const val = document.getElementById('scroll-val');
-
-viewport.addEventListener('scroll', () => {
-  const h = viewport.scrollHeight - viewport.clientHeight;
-  const s = viewport.scrollTop;
-  const perc = s / h;
-  
-  thumb.style.top = (perc * 90) + '%'; // 90% to keep inside
-  val.innerText = Math.round(s).toString().padStart(3, '0');
-});
+// Initial Kickoff
+simulateLoad();
+initWave();
 
 </script>
 </body>
